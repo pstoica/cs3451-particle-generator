@@ -1,6 +1,5 @@
 void writeHelp () {fill(dblue);
     int i=0;
-    scribe("3D VIEWER 2012 (Jarek Rossignac)",i++);
     scribe("CURVE t:show, s:move XY, a:move XZ , v:move all XY, b:move all XZ, A;archive, C.load",i++);
     scribe("MESH L:load, .:pick corner, Y:subdivide, E:smoothen, W:write, N:next, S.swing ",i++);
     scribe("VIEW space:pick focus, [:reset, ;:on mouse, E:save, e:restore ",i++);
@@ -9,7 +8,7 @@ void writeHelp () {fill(dblue);
 
    }
 void writeFooterHelp () {fill(dbrown);
-    scribeFooter("Jarek Rossignac's 3D template.  Press ?:help",1);
+    scribeFooter("Velocity Field Project. Press ?:help",1);
   }
 void scribeHeader(String S) {text(S,10,20);} // writes on screen at line i
 void scribeHeaderRight(String S) {text(S,width-S.length()*15,20);} // writes on screen at line i
