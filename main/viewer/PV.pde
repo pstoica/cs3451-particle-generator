@@ -218,4 +218,11 @@ pt D(pt A, pt B, pt C, pt D, float t) {float a=0, b=d(A,B), c=b+d(B,C), d=c+d(C,
 pt D(pt A, pt B, pt C, pt D, pt E, float t) {float a=0, b=d(A,B), c=b+d(B,C), d=c+d(C,D), e=d+d(D,E); return I(a,A,b,B,c,C,d,D,e,E,a+t*(e-a));}
 
 
+/* Specific Project Functionality */
+// calculates the closest projection for a pt P on a given curve C
+vec projection(pt P, curve C) {
+  pt closest = C.ClosestVertex(P);
+  return V(P, closest);
+}
+
 
