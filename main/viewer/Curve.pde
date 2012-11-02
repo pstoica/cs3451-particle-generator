@@ -63,8 +63,16 @@ class Curve {
   void cloneFrom(Curve D) {for (int i=0; i<max(n,D.n); i++) P[i].set(D.P[i]); n=D.n;}
   pt pt(int i) {return P[i];}
   void showLoop() { noFill(); stroke(orange); drawEdges(); noStroke(); fill(orange); showSamples(); }  
-  int closestVertexID(pt M) {int v=0; for (int i=1; i<n; i++) if (d(M,P[i])<d(M,P[v])) v=i; return v;}
-  pt ClosestVertex(pt M) {pt R=P[0]; for (int i=1; i<n; i++) if (d(M,P[i])<d(M,R)) R=P[i]; return P(R);}
+  int closestVertexID(pt M) {
+    int v=0;
+    for (int i=1; i<n; i++) if (d(M,P[i])<d(M,P[v])) v=i;
+    return v;
+  }
+  pt ClosestVertex(pt M) {
+    pt R=P[0];
+    for (int i=1; i<n; i++) if (d(M,P[i])<d(M,R)) R=P[i];
+    return P(R);
+  }
   float distanceTo(pt M) {float md=d(M,P[0]); for (int i=1; i<n; i++) md=min(md,d(M,P[i])); return md;}
   void savePts() {savePts("data/P.pts");}
   void savePts(String fn) { String [] inppts = new String [n+1];
@@ -132,6 +140,34 @@ class Curve {
        };
      n=s;   for (int i=0; i<n; i++)  P[i].set(R[i]);
    }
+
+  // ******** subdividing
+  Curve subdivide() {
+    pt[] S = new pt[(2 * n) - 1]; // temporary array
+
+    // put in the old vertices, leaving a space in between
+    for (int i = 0; i < S.length; i += 2) {
+      int i_0 = i/2;
+      S[i] = P[i_0];
+    }
+
+    // new edges put in between old vertices
+    for (int i = 1; i < S.length - 1; i += 2) {
+      int i_0 = i/2;
+      if (i == 1) {
+        S[i] = Neville(P[i_0], P[i_0+1], P[i_0+2], 0.5); // first parabola
+      } else if (i == S.length - 2) {
+        S[i] = Neville(P[i_0+1], P[i_0], P[i_0-1], 0.5); // last parabola
+      } else {
+        // in between, do a Neville on two Neville curves to get a good subdivision that more or less averages the two interpolation
+        S[i] = P(Neville(P[i_0-1], P[i_0], P[i_0+1], 1.5), (1.5)/3, Neville(P[i_0+2], P[i_0+1], P[i_0], 1.5));
+      }
+    }
+
+    n = S.length;
+    for (int v=0; v < S.length; v++) P[v]=S[v]; // copy back
+    return this;
+  }
    
    void save() {
     String savePath = selectOutput("Select or specify .pts file where the curve points will be saved");  // Opens file chooser
