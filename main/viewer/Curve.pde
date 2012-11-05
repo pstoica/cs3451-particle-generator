@@ -31,13 +31,14 @@ class Curve {
   void resetPoints(float r) {println(">>n="+n); for (int i=0; i<n; i++) {P[i].x=r*cos(TWO_PI/n*i); P[i].y=r*sin(TWO_PI/n*i);}; } // init the points to be on a circle
   void resetPoints(float r, pt Q) {println(">>n="+n); for (int i=0; i<n; i++) {P[i].x=r*cos(TWO_PI/n*i); P[i].y=r*sin(TWO_PI/n*i); P[i].add(Q);}; } // init the points to be on a circle
   Curve empty(){ n=0; return this; };      // resets the vertex count to zero
-  void pick(pt M) {p=0; for (int i=1; i<n; i++) if (d(M,P[i])<d(M,P[p])) p=i;}
-  void dragPoint(vec V) {P[p].add(V);}
+  void pick(pt M) {p=closestVertexID(M);}
+  void pick(int id) {p = id;}
+  void dragPoint(vec V) { P[p].add(V); System.out.println(V.x + " " + V.y + " " + V.z);}
   void dragAll(vec V) {for (int i=0; i<n; i++) P[i].add(V);}
   void dragAll(int s, int e, vec V) {for (int i=s; i<e+1; i++) P[i].add(V);}
   void movePointTo(pt Q) {P[p].set(Q);}
   Curve append(pt Q)  {if(n+1 < P.length) { p=n; P[n++].set(Q); } return this; }; // add point at end of list
-  void delete() { for (int i=p; i<n-1; i++) P[i].set(P[next(i)]); n--; p=prev(p);}
+  void delete() {for (int i=p; i<n-1; i++) P[i] = (P[next(i)]); n--; p=prev(p);}
   void insert() { // inserts after p
     if(p==n-1) {P[n].set(P[n-1]); p=n; n++; } 
     else {
@@ -95,6 +96,14 @@ class Curve {
     pt R=P[0];
     for (int i=1; i<n; i++) if (d(M,P[i])<d(M,R)) R=P[i];
     return P(R);
+  }
+  int ClosestVertexID2D(pt M) {
+    int x = 0;
+    for (int i=1; i<n; i++) if (d(M,PScreen(P[i]))<d(M,PScreen(P[x]))) x = i;
+    return x;
+  }
+  pt ClosestVertex2D(pt M) {
+    return P(P[ClosestVertexID2D(M)]);
   }
   boolean nearLast(pt M) {
     return (closestVertexID(M) == (this.n - 1));
@@ -313,6 +322,10 @@ class Curve {
     //System.out.println("cos: " + cos(sq(offset)));
     //return V(cos(sq(offset)), U(P[closest], P[next(closest)]));
     return V(5, U(P[closest], P[next(closest)]));
+  }
+
+  vec velocityFromLast() {
+    return V(5, U(P[n - 2], P[n - 1]));
   }
     
   void showTube(float r, int ne, int nq, color col) {

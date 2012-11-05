@@ -90,11 +90,15 @@ void v(pt P) {vertex(P.x,P.y,P.z);} // rendering
 pt PnoX(pt P) {return P(0, P.y, P.z);}
 pt PnoY(pt P) {return P(P.x, 0, P.z);}
 pt PnoZ(pt P) {return P(P.x, P.y, 0);}
+pt PnoXNorm(pt P) {return P(0, P.y - P.x, P.z - P.x);}
+pt PnoYNorm(pt P) {return P(P.x - P.y, 0, P.z - P.y);}
+pt PnoZNorm(pt P) {return P(P.x - P.z, P.y - P.z, 0);}
 pt PonClosestAxis(pt P) {
-  if (P.z > P.x && P.z > P.y) return PnoZ(P);
-  else if (P.x > P.z && P.x > P.y) return PnoX(P);
-  else return PnoY(P);
+  if (P.z > P.x && P.z > P.y) return PnoZNorm(P(1.0, P));
+  else if (P.x > P.z && P.x > P.y) return PnoXNorm(P(1.0, P));
+  else return PnoYNorm(P(1.0, P));
 }
+pt PScreen(pt P) {return P(screenX(P.x, P.y, P.z), screenY(P.x, P.y, P.z), 0);}
 
 
 // ===== mouse tools
@@ -132,15 +136,6 @@ void show(pt P, float r) {pushMatrix(); translate(P.x,P.y,P.z); sphere(r); popMa
 void show(pt P, float s, vec I, vec J, vec K) {noStroke(); fill(yellow); show(P,5); stroke(red); show(P,s,I); stroke(green); show(P,s,J); stroke(blue); show(P,s,K); }; // render sphere of radius r and center P
 void show(pt P, String s) {text(s, P.x, P.y, P.z); }; // prints string s in 3D at P
 void show(pt P, String s, vec D) {text(s, P.x+D.x, P.y+D.y, P.z+D.z);  }; // prints string s in 3D at P+D
-void showOnAxes(pt P, vec I, vec J, vec K) {
-  show(P, 30);
-  stroke(red);
-  show(P, I);
-  stroke(green);
-  show(P, J);
-  stroke(blue);
-  show(P, K);
-}
 
 // ==== curve
 void bezier(pt A, pt B, pt C, pt D) {bezier(A.x,A.y,A.z,B.x,B.y,B.z,C.x,C.y,C.z,D.x,D.y,D.z);} // draws a cubic Bezier curve with control points A, B, C, D

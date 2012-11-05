@@ -6,8 +6,12 @@ import processing.opengl.*;                // load OpenGL libraries and utilitie
 import javax.media.opengl.*; 
 import javax.media.opengl.glu.*; 
 import java.nio.*;
-GL gl; 
-GLU glu; 
+import controlP5.*;
+
+GL gl;
+GLU glu;
+ControlP5 cp5;
+RadioButton buttons;
 
 // ****************************** GLOBAL VARIABLES FOR DISPLAY OPTIONS *********************************
 Boolean 
@@ -21,12 +25,16 @@ Boolean
   showFrenetNormal=false,
   filterFrenetNormal=true,
   showTwistFreeNormal=false, 
-  showHelpText=false; 
+  showHelpText=false;
 
-// String SCC = "-"; // info on current corner
-   
+final int INSERT_POINT = 1,
+          ADD_POINT = 2,
+          DELETE_POINT = 3,
+          MOVE_POINT = 4,
+          MOVE_PG = 5;
+
 // ****************************** VIEW PARAMETERS *******************************************************
-pt F = P(0,0,0); pt T = P(0,0,0); pt E; vec U=V(0,1,0);  // focus  set with mouse when pressing ';', eye, and up vector
+pt F = P(0,0,0); pt T = P(0,0,0); pt E; vec U=V(0,1,0); pt mouse, picked; // focus  set with mouse when pressing ';', eye, and up vector
 pt Q=P(0,0,0); vec I=V(1,0,0); vec J=V(0,1,0); vec K=V(0,0,1); // picked surface point Q and screen aligned vectors {I,J,K} set when picked
 void initView() {Q=P(0,0,0); I=V(1,0,0); J=V(0,1,0); K=V(0,0,1); F = P(0,0,0); E = P(800,800,800); U=V(0,-1,0); } // declares the local frames
 
@@ -38,7 +46,8 @@ int nsteps=250; // number of smaples along spine
 float sampleDistance=10; // sample distance for spine
 pt sE = P(), sF = P(); vec sU=V(); //  view parameters (saved with 'j'
 float t = 0;
-int particlesPerSecond = 5;
+int particlesPerSecond = 3;
+int pgRadius = 100;
 
 // *******************************************************************************************************************    SETUP
 void setup() {
@@ -47,14 +56,47 @@ void setup() {
   setColors(); sphereDetail(6); 
   PFont font = loadFont("GillSans-24.vlw"); textFont(font, 20);  // font for writing labels on //  PFont font = loadFont("Courier-14.vlw"); textFont(font, 12); 
   // ***************** OpenGL and View setup
-  glu= ((PGraphicsOpenGL) g).glu;  PGraphicsOpenGL pgl = (PGraphicsOpenGL) g;  gl = pgl.beginGL();  pgl.endGL();
+  glu = ((PGraphicsOpenGL) g).glu;  PGraphicsOpenGL pgl = (PGraphicsOpenGL) g;  gl = pgl.beginGL();  pgl.endGL();
   initView(); // declares the local frames for 3D GUI
+
+  // ***************** GUI
+  cp5 = new ControlP5(this);
+  cp5.addSlider("particlesPerSecond")
+    .setPosition(10,10)
+    .setRange(1,50)
+    .setCaptionLabel("Particles Per Second")
+    .setColorCaptionLabel(0x000);
+
+  cp5.addSlider("pgRadius")
+    .setPosition(10,30)
+    .setRange(10,500)
+    .setCaptionLabel("Particle Generator Radius")
+    .setColorCaptionLabel(0x000);
+
+  buttons = cp5.addRadioButton("radioButton")
+            .setPosition(10,50)
+            .setSize(40,20)
+            .setColorForeground(color(120))
+            .setColorActive(color(140))
+            .setColorLabel(color(0))
+            .setItemsPerRow(1)
+            .setSpacingColumn(50)
+            .addItem("Insert Control Point", 1)
+            .addItem("Add Control Point", 2)
+            .addItem("Delete Control Point", 3)
+            .addItem("Move Control Point", 4)
+            .addItem("Move Particle Generator", 5);
 
   // ***************** Load Curve
   C.loadPts();
   S0.cloneFrom(C);
-  pg = new ParticleGenerator(S0);
+  pg = new ParticleGenerator(S0, pgRadius);
   }
+
+void radioButton(int a) {
+  System.out.println("wtf");
+  picked = null;
+}
   
 // ******************************************************************************************************************* DRAW      
 void draw() {  
@@ -65,7 +107,9 @@ void draw() {
     lights();
     fill(black); writeHelp();
     return;
-    } 
+  }
+
+  mouse = P(mouseX, mouseY, 0);
     
   // -------------------------------------------------------- 3D display : set up view ----------------------------------
   camera(E.x, E.y, E.z, F.x, F.y, F.z, U.x, U.y, U.z); // defines the view : eye, ctr, up
@@ -74,34 +118,27 @@ void draw() {
   specular(255,255,0); shininess(5);
   
   // -------------------------- display and edit control points of the spines and box ----------------------------------   
-    if(pressed) {
-      if (keyPressed&&(key=='a'||key=='s')) {
-        //fill(white,0); noStroke(); if(showControl) C.showSamples(20);
-        C.pick(Pick());
-      }
+  if(buttons.getValue() == INSERT_POINT) {
+    picked = S0.ClosestVertex2D(mouse);
+    stroke(orange);
+    noFill();
+    show(picked, 10);
+  } else if(buttons.getValue() == ADD_POINT) {
+    picked = P(C.last(), V(100, 100, 100));
+    stroke(orange);
+    noFill();
+    show(picked, 10);
+  } else if(buttons.getValue() == DELETE_POINT || buttons.getValue() == MOVE_POINT) {
+    if (!mousePressed) {
+      picked = C.ClosestVertex2D(mouse);
+      C.pick(picked);
     }
-
-    if(keyPressed && key == 'i') {
-      pt P = Pick();
-      stroke(red);
-      noFill();
-      //showOnAxes(P, I, J, K);
-      show(PonClosestAxis(P), 4);
-    }
-    if(keyPressed && key == 'j') {
-      pt P = Pick();
-      stroke(red);
-      noFill();
-      showOnAxes(P, I, J, K);
-    }
-    if(keyPressed && key == 'x' && C.n > 2) {
-      pt something = Pick();
-      System.out.println(something.x + " " + something.y + " " + something.z);
-      pt P = C.ClosestVertex(Pick());
-      stroke(red);
-      noFill();
-      showOnAxes(P, I, J, K);
-    }
+    stroke(orange);
+    noFill();
+    show(C.cP(), 10);
+  } else {
+    picked = null;
+  }
      
   // -------------------------------------------------------- create control curves  ----------------------------------   
    //C0.empty().append(C.Pof(0)).append(C.Pof(1)).append(C.Pof(2)).append(C.Pof(3)).append(C.Pof(4)); 
@@ -112,7 +149,7 @@ void draw() {
    stroke(blue); noFill();
    if(showSpine) {
     S0.drawEdges();
-    stroke(0, 0, 0, 100); S0.drawShadows();
+    stroke(0, 0, 0, 100); //S0.drawShadows();
    }
    
    // -------------------------------------------------------- compute spine normals  ----------------------------------   
@@ -120,6 +157,8 @@ void draw() {
    if (t > 1.0) {
     pg.generate(particlesPerSecond);
    }
+
+   if (buttons.getValue() == MOVE_PG) stroke(orange);
    pg.drawParticles();
   
    // -------------------------------------------------------- show tube ----------------------------------   
@@ -132,16 +171,16 @@ void draw() {
    //showFrame(Q,I,J,K,30);  // sets frame from picked points and screen axes
    showAxes(50);
   // rotate view 
-  if(!keyPressed&&mousePressed) {E=R(E,  PI*float(mouseX-pmouseX)/width,I,K,F); E=R(E,-PI*float(mouseY-pmouseY)/width,J,K,F); } // rotate E around F 
-  if(keyPressed&&key=='D'&&mousePressed) {E=P(E,-float(mouseY-pmouseY),K); }  //   Moves E forward/backward
-  if(keyPressed&&key=='d'&&mousePressed) {E=P(E,-float(mouseY-pmouseY),K);U=R(U, -PI*float(mouseX-pmouseX)/width,I,J); }//   Moves E forward/backward and rotatees around (F,Y)
+  if(keyPressed&&key=='m'&&mousePressed) {E=R(E,  PI*float(mouseX-pmouseX)/width,I,K,F); E=R(E,-PI*float(mouseY-pmouseY)/width,J,K,F); } // rotate E around F 
+  if(keyPressed&&key=='n'&&mousePressed) {E=P(E,-float(mouseY-pmouseY),K); }  //   Moves E forward/backward
+  if(keyPressed&&key=='r'&&mousePressed) {U=R(U, -PI*float(mouseX-pmouseX)/width,I,J); }//   Rotates around (F,Y)
    
   // -------------------------------------------------------- Disable z-buffer to display occluded silhouettes and other things ---------------------------------- 
   hint(DISABLE_DEPTH_TEST);  // show on top
   stroke(black); if(showControl) {
     C.showSamples(2);
     stroke(white);
-    C.showShadowSamples(1);
+    //C.showShadowSamples(1);
   }
   camera(); // 2D view to write help text
   writeFooterHelp();
@@ -154,6 +193,8 @@ void draw() {
   if (t > 1) t = 0;
   t += 0.2;
 
+  pg.radius = pgRadius;
+
  } // end draw
  
  
@@ -163,10 +204,31 @@ Boolean pressed=false;
 void mousePressed() {pressed=true; }
   
 void mouseDragged() {
-  if(keyPressed&&key=='a') {C.dragPoint( V(.5*(mouseX-pmouseX),I,.5*(mouseY-pmouseY),K) ); } // move selected vertex of curve C in screen plane
-  if(keyPressed&&key=='s') {C.dragPoint( V(.5*(mouseX-pmouseX),I,-.5*(mouseY-pmouseY),J) ); } // move selected vertex of curve C in screen plane
-  if(keyPressed&&key=='b') {C.dragAll(0,5, V(.5*(mouseX-pmouseX),I,.5*(mouseY-pmouseY),K) ); } // move selected vertex of curve C in screen plane
-  if(keyPressed&&key=='v') {C.dragAll(0,5, V(.5*(mouseX-pmouseX),I,-.5*(mouseY-pmouseY),J) ); } // move selected vertex of curve Cb in XZ
+  //if(keyPressed&&key=='a') {C.dragPoint( V(.5*(mouseX-pmouseX),I,.5*(mouseY-pmouseY),K) ); } // move selected vertex of curve C in screen plane
+  //if(keyPressed&&key=='s') {C.dragPoint( V(.5*(mouseX-pmouseX),I,-.5*(mouseY-pmouseY),J) ); } // move selected vertex of curve C in screen plane
+  if(keyPressed&&key=='x') {
+    vec V = V((mouseX-pmouseX), I, (mouseY-pmouseY), I);
+    V.y = 0;
+    V.z = 0;
+    if (buttons.getValue() == MOVE_POINT) C.dragPoint(V);
+    if (buttons.getValue() == MOVE_PG) pg.dragOrigin(V);
+  }
+  if(keyPressed&&key=='y') {
+    vec V = V(-1*(mouseX-pmouseX), J, -1*(mouseY-pmouseY), J);
+    V.x = 0;
+    V.z = 0;
+    if (buttons.getValue() == MOVE_POINT) C.dragPoint(V);
+    if (buttons.getValue() == MOVE_PG) pg.dragOrigin(V);
+  }
+  if(keyPressed&&key=='z') {
+    vec V = V((mouseX-pmouseX), K, (mouseY-pmouseY), K);
+    V.x = 0;
+    V.y = 0;
+    if (buttons.getValue() == MOVE_POINT) C.dragPoint(V(0, 0, .5*(mouseX-pmouseX)));
+    if (buttons.getValue() == MOVE_PG) pg.dragOrigin(V);
+  }
+  if(keyPressed&&key=='b') {C.dragAll(V(.5*(mouseX-pmouseX),I,.5*(mouseY-pmouseY),K) ); } // move selected vertex of curve C in screen plane
+  if(keyPressed&&key=='v') {C.dragAll(V(.5*(mouseX-pmouseX),I,-.5*(mouseY-pmouseY),J) ); } // move selected vertex of curve Cb in XZ
   }
 
 void mouseReleased() {
@@ -179,18 +241,19 @@ void keyReleased() {
 }
 
 void mouseClicked() {
-  if (keyPressed && key == 'i') {
-      C.insert(Pick());
+  if (picked != null) {
+    if (buttons.getValue() == INSERT_POINT) {
+        C.insert(picked);
+        System.out.println("vertices: " + C.n);
+    }
+    if (buttons.getValue() == ADD_POINT) {
+      C.append(picked);
       System.out.println("vertices: " + C.n);
-  }
-  if (keyPressed && key == 'j') {
-    C.append(Pick());
-    System.out.println("vertices: " + C.n);
-  }
-  if (keyPressed && key == 'x' && C.n > 2) {
-    C.pick(C.ClosestVertex(Pick()));
-    C.delete();
-    System.out.println("vertices: " + C.n);
+    }
+    if (buttons.getValue() == DELETE_POINT && C.n > 2) {
+      C.delete();
+      System.out.println("vertices: " + C.n);
+    }
   }
 }
 
@@ -220,7 +283,6 @@ void keyPressed() {
   if(key=='A') {C.savePts();}
   if(key=='B') {}
   if(key=='C') {C.loadPts();} // save curve
-  if(key=='D') {} //move in depth without rotation (draw)
   if(key=='F') {}
   if(key=='G') {}
   if(key=='H') {}

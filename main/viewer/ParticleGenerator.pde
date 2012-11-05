@@ -5,20 +5,18 @@ class ParticleGenerator {
   ArrayList<vec> V;
   pt origin;
   Curve C;
-  int max = 50;
   float radius, particleRadius = 3, blend = 0.5;
-  ParticleGenerator(Curve c) {
+  ParticleGenerator(Curve c, int r) {
     C = c;
     origin = P(C.first().x, C.first().y, C.first().z);
-    radius = 100;
+    radius = r;
     P = new ArrayList<pt>();
     V = new ArrayList<vec>();
   }
-  void updateVelocity(int i) {
-
+  void dragOrigin(vec V) {
+    origin.add(V);
   }
   void generate(int count) {
-    if (P.size() > max) return;
     for (int i = 0; i < count;) {
       float x = random(-1, 1),
             y = random(-1, 1),
@@ -42,7 +40,6 @@ class ParticleGenerator {
     radius = r;
   }
   void drawParticles() {
-    stroke(blue);
     show(origin, radius);
     stroke(red);
     for (int i = 0; i < P.size(); i++) {

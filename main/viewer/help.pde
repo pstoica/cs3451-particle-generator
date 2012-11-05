@@ -8,6 +8,8 @@ void writeHelp () {fill(dblue);
 
    }
 void writeFooterHelp () {fill(dbrown);
+    scribeFooter("Particle Generator Radius: ", 3);
+    scribeFooter("Particles Per Second: ", 2);
     scribeFooter("Velocity Field Project. Press ?:help",1);
   }
 void scribeHeader(String S) {text(S,10,20);} // writes on screen at line i
@@ -19,4 +21,3 @@ void scribeAtMouse(String S) {text(S,mouseX,mouseY);} // writes on screen near m
 void scribeAt(String S, int x, int y) {text(S,x,y);} // writes on screen pixels at (x,y)
 void scribe(String S, float x, float y) {text(S,x,y);} // writes at (x,y)
 void scribe(String S, float x, float y, color c) {fill(c); text(S,x,y); noFill();}
-;
