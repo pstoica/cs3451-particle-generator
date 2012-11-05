@@ -316,16 +316,13 @@ class Curve {
 
   vec velocityFrom(pt M) {
     int closest = closestVertexID(M);
+    float dToP = distanceTo(M);
     //TODO: some kind of decay function?
     //float dtoP = distanceTo(M);
     //float offset = dtoP * ((PI/2)*distanceTo(last()));
     //System.out.println("cos: " + cos(sq(offset)));
     //return V(cos(sq(offset)), U(P[closest], P[next(closest)]));
-    return V(5, U(P[closest], P[next(closest)]));
-  }
-
-  vec velocityFromLast() {
-    return V(5, U(P[n - 2], P[n - 1]));
+    return V(20/(1+dToP), V(P[closest], P[next(closest)]));
   }
     
   void showTube(float r, int ne, int nq, color col) {

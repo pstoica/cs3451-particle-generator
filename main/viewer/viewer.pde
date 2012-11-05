@@ -47,7 +47,9 @@ float sampleDistance=10; // sample distance for spine
 pt sE = P(), sF = P(); vec sU=V(); //  view parameters (saved with 'j'
 float t = 0;
 int particlesPerSecond = 3;
+int particleRadius = 3;
 int pgRadius = 100;
+float pgGravity = 100;
 
 // *******************************************************************************************************************    SETUP
 void setup() {
@@ -67,14 +69,26 @@ void setup() {
     .setCaptionLabel("Particles Per Second")
     .setColorCaptionLabel(0x000);
 
-  cp5.addSlider("pgRadius")
+  cp5.addSlider("particleRadius")
     .setPosition(10,30)
+    .setRange(1,20)
+    .setCaptionLabel("Particle Radius")
+    .setColorCaptionLabel(0x000);
+
+  cp5.addSlider("pgRadius")
+    .setPosition(10,50)
     .setRange(10,500)
     .setCaptionLabel("Particle Generator Radius")
     .setColorCaptionLabel(0x000);
 
+  cp5.addSlider("pgGravity")
+    .setPosition(10,70)
+    .setRange(0,300)
+    .setCaptionLabel("Gravity")
+    .setColorCaptionLabel(0x000);
+
   buttons = cp5.addRadioButton("radioButton")
-            .setPosition(10,50)
+            .setPosition(10,90)
             .setSize(40,20)
             .setColorForeground(color(120))
             .setColorActive(color(140))
@@ -84,13 +98,17 @@ void setup() {
             .addItem("Insert Control Point", 1)
             .addItem("Add Control Point", 2)
             .addItem("Delete Control Point", 3)
-            .addItem("Move Control Point", 4)
-            .addItem("Move Particle Generator", 5);
+            .addItem("Move Control Point (x, y, z)", 4)
+            .addItem("Move Particle Generator (x, y, z)", 5);
 
   // ***************** Load Curve
   C.loadPts();
   S0.cloneFrom(C);
   pg = new ParticleGenerator(S0, pgRadius);
+  pg.setEarth(new pt(200,300,400),50);
+  
+  texmap = loadImage("world32k.jpg");    
+  initializeSphere(sDetail);
   }
 
 void radioButton(int a) {
@@ -157,8 +175,6 @@ void draw() {
    if (t > 1.0) {
     pg.generate(particlesPerSecond);
    }
-
-   if (buttons.getValue() == MOVE_PG) stroke(orange);
    pg.drawParticles();
   
    // -------------------------------------------------------- show tube ----------------------------------   
@@ -194,6 +210,8 @@ void draw() {
   t += 0.2;
 
   pg.radius = pgRadius;
+  pg.gravity = pgGravity;
+  pg.particleRadius = particleRadius;
 
  } // end draw
  

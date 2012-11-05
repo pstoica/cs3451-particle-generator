@@ -59,7 +59,6 @@ void renderGlobe(Sphere s) {
   pushMatrix();
   noFill();
   stroke(255,200);
-  strokeWeight(2);
   smooth();
   popMatrix();
   lights();    
@@ -78,11 +77,27 @@ void renderGlobe(Sphere s) {
   velocityY *= 0.95;
   
   // Implements mouse control (interaction will be inverse when sphere is  upside down)
-  if(mousePressed){
-    velocityX += (mouseY-pmouseY) * 0.01;
-    velocityY -= (mouseX-pmouseX) * 0.01;
-  }
+
 }
+
+void renderGlobe(pt p, float r) {
+  pushMatrix();
+  translate(p.x, p.y, p.z);
+  noFill();
+  stroke(255,200);
+  smooth();
+  lights();
+  rotateX( radians(-rotationX) );  
+  rotateY( radians(270 - rotationY) );
+  fill(200);
+  noStroke();
+  textureMode(IMAGE);  
+  texturedSphere(r, texmap);
+  popMatrix();
+  
+  // Implements mouse control (interaction will be inverse when sphere is  upside down)
+}
+
 
 void initializeSphere(int res)
 {
@@ -276,7 +291,7 @@ class Sphere{
     }
     return false;
   }
-  Sphere generate(float r){
+  /*Sphere generate(float r){
     float d = random(this.r);
     float angle = random(2*PI);
     float xOff = d*cos(angle);
@@ -285,6 +300,6 @@ class Sphere{
     Sphere s = new Sphere(this.x+xOff,this.y+yOff,this.z+zOff,r);
     s.setVelocity(0,0,1);
     return s;
-  }
+  }*/
 }
 
