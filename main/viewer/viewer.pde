@@ -17,7 +17,7 @@ Boolean
   showSpine=true,
   showControl=true,
   showTube=true,
-  showFrenetQuads=false,
+  showFrenetQuads=true,
   showFrenetNormal=false,
   filterFrenetNormal=true,
   showTwistFreeNormal=false, 
@@ -26,23 +26,24 @@ Boolean
 // String SCC = "-"; // info on current corner
    
 // ****************************** VIEW PARAMETERS *******************************************************
-pt F = P(0,0,0); pt T = P(0,0,0); pt E = P(0,0,1000); vec U=V(0,1,0);  // focus  set with mouse when pressing ';', eye, and up vector
+pt F = P(0,0,0); pt T = P(0,0,0); pt E; vec U=V(0,1,0);  // focus  set with mouse when pressing ';', eye, and up vector
 pt Q=P(0,0,0); vec I=V(1,0,0); vec J=V(0,1,0); vec K=V(0,0,1); // picked surface point Q and screen aligned vectors {I,J,K} set when picked
-void initView() {Q=P(0,0,0); I=V(1,0,0); J=V(0,1,0); K=V(0,0,1); F = P(0,0,0); E = P(0,0,1000); U=V(0,1,0); } // declares the local frames
+void initView() {Q=P(0,0,0); I=V(1,0,0); J=V(0,1,0); K=V(0,0,1); F = P(0,0,0); E = P(800,800,800); U=V(0,-1,0); } // declares the local frames
 
-
-float volume1=0, volume0=0;
-float sampleDistance=1;
 // ******************************** CURVES & SPINES ***********************************************
 Curve C0 = new Curve(5), S0 = new Curve(), C1 = new Curve(5), S1 = new Curve();  // control points and spines 0 and 1
 Curve C= new Curve(11,130,P());
+ParticleGenerator pg;
 int nsteps=250; // number of smaples along spine
-float sd=10; // sample distance for spine
+float sampleDistance=10; // sample distance for spine
 pt sE = P(), sF = P(); vec sU=V(); //  view parameters (saved with 'j'
+float t = 0;
+int particlesPerSecond = 5;
 
 // *******************************************************************************************************************    SETUP
 void setup() {
-  size(800, 800, OPENGL);  
+  size(800, 800, OPENGL);
+  frameRate(30);  
   setColors(); sphereDetail(6); 
   PFont font = loadFont("GillSans-24.vlw"); textFont(font, 20);  // font for writing labels on //  PFont font = loadFont("Courier-14.vlw"); textFont(font, 12); 
   // ***************** OpenGL and View setup
@@ -51,11 +52,8 @@ void setup() {
 
   // ***************** Load Curve
   C.loadPts();
-  
-  // ***************** Set view
- 
-  F=P(); E=P(0,0,500);
-  for(int i=0; i<10; i++) vis[i]=true; // to show all types of triangles
+  S0.cloneFrom(C);
+  pg = new ParticleGenerator(S0);
   }
   
 // ******************************************************************************************************************* DRAW      
@@ -77,29 +75,62 @@ void draw() {
   
   // -------------------------- display and edit control points of the spines and box ----------------------------------   
     if(pressed) {
-     if (keyPressed&&(key=='a'||key=='s')) {
-       fill(white,0); noStroke(); if(showControl) C.showSamples(20);
-       C.pick(Pick());
-       }
-     }
+      if (keyPressed&&(key=='a'||key=='s')) {
+        //fill(white,0); noStroke(); if(showControl) C.showSamples(20);
+        C.pick(Pick());
+      }
+    }
+
+    if(keyPressed && key == 'i') {
+      pt P = Pick();
+      stroke(red);
+      noFill();
+      //showOnAxes(P, I, J, K);
+      show(PonClosestAxis(P), 4);
+    }
+    if(keyPressed && key == 'j') {
+      pt P = Pick();
+      stroke(red);
+      noFill();
+      showOnAxes(P, I, J, K);
+    }
+    if(keyPressed && key == 'x' && C.n > 2) {
+      pt something = Pick();
+      System.out.println(something.x + " " + something.y + " " + something.z);
+      pt P = C.ClosestVertex(Pick());
+      stroke(red);
+      noFill();
+      showOnAxes(P, I, J, K);
+    }
      
   // -------------------------------------------------------- create control curves  ----------------------------------   
-   C0.empty().append(C.Pof(0)).append(C.Pof(1)).append(C.Pof(2)).append(C.Pof(3)).append(C.Pof(4)); 
+   //C0.empty().append(C.Pof(0)).append(C.Pof(1)).append(C.Pof(2)).append(C.Pof(3)).append(C.Pof(4)); 
 
    // -------------------------------------------------------- create and show spines  ----------------------------------   
-   S0=S0.makeFrom(C0,500).resampleDistance(sampleDistance);
-   stroke(blue); noFill(); if(showSpine) S0.drawEdges(); 
+   S0.cloneFrom(C);
+   S0.setNV(200);
+   stroke(blue); noFill();
+   if(showSpine) {
+    S0.drawEdges();
+    stroke(0, 0, 0, 100); S0.drawShadows();
+   }
    
    // -------------------------------------------------------- compute spine normals  ----------------------------------   
-   S0.prepareSpine(0);
+   //S0.prepareSpine(0);
+   if (t > 1.0) {
+    pg.generate(particlesPerSecond);
+   }
+   pg.drawParticles();
   
    // -------------------------------------------------------- show tube ----------------------------------   
-   if(showTube) S0.showTube(10,4,10,orange); 
+   //if(showTube) S0.showTube(10,4,10,orange); 
 
  
   // -------------------------------------------------------- graphic picking on surface and view control ----------------------------------   
   if (keyPressed&&key==' ') T.set(Pick()); // sets point T on the surface where the mouse points. The camera will turn toward's it when the ';' key is released
-  SetFrame(Q,I,J,K);  // showFrame(Q,I,J,K,30);  // sets frame from picked points and screen axes
+  SetFrame(Q,I,J,K);
+   //showFrame(Q,I,J,K,30);  // sets frame from picked points and screen axes
+   showAxes(50);
   // rotate view 
   if(!keyPressed&&mousePressed) {E=R(E,  PI*float(mouseX-pmouseX)/width,I,K,F); E=R(E,-PI*float(mouseY-pmouseY)/width,J,K,F); } // rotate E around F 
   if(keyPressed&&key=='D'&&mousePressed) {E=P(E,-float(mouseY-pmouseY),K); }  //   Moves E forward/backward
@@ -107,7 +138,11 @@ void draw() {
    
   // -------------------------------------------------------- Disable z-buffer to display occluded silhouettes and other things ---------------------------------- 
   hint(DISABLE_DEPTH_TEST);  // show on top
-  stroke(black); if(showControl) {C0.showSamples(2);}
+  stroke(black); if(showControl) {
+    C.showSamples(2);
+    stroke(white);
+    C.showShadowSamples(1);
+  }
   camera(); // 2D view to write help text
   writeFooterHelp();
   hint(ENABLE_DEPTH_TEST); // show silouettes
@@ -115,6 +150,9 @@ void draw() {
   // -------------------------------------------------------- SNAP PICTURE ---------------------------------- 
    if(snapping) snapPicture(); // does not work for a large screen
     pressed=false;
+
+  if (t > 1) t = 0;
+  t += 0.2;
 
  } // end draw
  
@@ -138,9 +176,24 @@ void mouseReleased() {
 void keyReleased() {
    if(key==' ') F=P(T);                           //   if(key=='c') M0.moveTo(C.Pof(10));
    U.set(M(J)); // reset camera up vector
-   } 
+}
 
- 
+void mouseClicked() {
+  if (keyPressed && key == 'i') {
+      C.insert(Pick());
+      System.out.println("vertices: " + C.n);
+  }
+  if (keyPressed && key == 'j') {
+    C.append(Pick());
+    System.out.println("vertices: " + C.n);
+  }
+  if (keyPressed && key == 'x' && C.n > 2) {
+    C.pick(C.ClosestVertex(Pick()));
+    C.delete();
+    System.out.println("vertices: " + C.n);
+  }
+}
+
 void keyPressed() {
   if(key=='a') {} // drag curve control point in xz (mouseDragged)
   if(key=='b') {}  // move S2 in XZ
@@ -150,8 +203,7 @@ void keyPressed() {
   if(key=='f') {filterFrenetNormal=!filterFrenetNormal; if(filterFrenetNormal) println("Filtering"); else println("not filtering");}
   if(key=='g') {} // change global twist w (mouseDrag)
   if(key=='h') {} // hide picked vertex (mousePressed)
-  if(key=='i') {}
-  if(key=='j') {}
+  if(key=='x') {}
   if(key=='k') {}
   if(key=='l') {}
   if(key=='n') {showNMBE=!showNMBE;}
@@ -159,7 +211,6 @@ void keyPressed() {
   if(key=='p') {}
   if(key=='q') {}
   if(key=='r') {}
-  if(key=='s') {} // drag curve control point in xz (mouseDragged)
   if(key=='t') {showTube=!showTube;}
   if(key=='u') {}
   if(key=='v') {} // move S2

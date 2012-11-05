@@ -42,9 +42,9 @@ void showFrame(pt Q, vec I, vec J, vec K, float s) {  // sets the matrix and dis
 void showAxes(float s) { // shows three orthogonal axes as red, green, blue blocks aligned with the local frame coordinates
   noStroke();
   pushMatrix(); 
-  pushMatrix(); fill(red);  scale(s,1,1); box(2); popMatrix();
-  pushMatrix(); fill(green);  scale(1,s,1); box(2); popMatrix();
-  pushMatrix(); fill(blue);  scale(1,1,s); box(2); popMatrix();  
+  pushMatrix(); fill(255, 0, 0, 50);  translate(5 * s, 5 * s, 0); box(10 * s, 10 * s, 0); popMatrix();
+  pushMatrix(); fill(0, 255, 0, 50); translate(5 * s, 0, 5 * s); box(10 * s, 1, 10 * s); popMatrix();
+  pushMatrix(); fill(0, 0, 255, 50); translate(0, 5 * s, 5 * s); box(1, 10 * s, 10 * s); popMatrix();  
   popMatrix();  
   }
   

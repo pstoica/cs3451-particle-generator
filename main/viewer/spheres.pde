@@ -18,7 +18,6 @@ float rotationX = 0;
 float rotationY = 0;
 float velocityX = 0;
 float velocityY = 0;
-float globeRadius = 450;
 float pushBack = 0;
 
 float[] cx, cz, sphereX, sphereY, sphereZ;
@@ -27,24 +26,36 @@ float cosLUT[];
 float SINCOS_PRECISION = 0.5;
 int SINCOS_LENGTH = int(360.0 / SINCOS_PRECISION);
 
+Sphere s1,s2;
 
 void setup2() {
   size(1024, 768, OPENGL);  
   texmap = loadImage("world32k.jpg");    
   initializeSphere(sDetail);
+  s1 = new Sphere(100,100,10,50);
+  s2 = new Sphere(500,150,10,50);
+  s1.V= new vec(1,0,0);
+  s2.V= new vec(-1,0,0);
 }
 
 void draw2() {    
   background(0);            
-  renderGlobe();
+  renderGlobe(s1);
+  //renderGlobe(s2);
+  //s1.show();
+  s2.show();
+  s1.move();
+  s2.move();
+  if (s1.collide(s2)) println("collision");
+  if (s2.collide(s1)) println("redundant "); 
 }
 
 void drawSphere(){  
 }
 
-void renderGlobe() {
+void renderGlobe(Sphere s) {
   pushMatrix();
-  translate(width/2.0, height/2.0, pushBack);
+  translate(s.x, s.y, s.z);
   pushMatrix();
   noFill();
   stroke(255,200);
@@ -58,7 +69,7 @@ void renderGlobe() {
   fill(200);
   noStroke();
   textureMode(IMAGE);  
-  texturedSphere(globeRadius, texmap);
+  texturedSphere(s.r, texmap);
   popMatrix();  
   popMatrix();
   rotationX += velocityX;
@@ -122,7 +133,7 @@ void initializeSphere(int res)
 void drawSphere(float r, PImage t) 
 {
   int v1,v11,v2;
-  r = (r + 240 ) * 0.33;
+  //r = (r + 240 ) * 0.33;
   beginShape(TRIANGLE_STRIP);
   texture(t);
   float iu=(float)(t.width-1)/(sDetail);
@@ -179,7 +190,7 @@ void drawSphere(float r, PImage t)
 void texturedSphere(float r, PImage t) 
 {
   int v1,v11,v2;
-  r = (r + 240 ) * 0.33;
+//  r = (r + 240 ) * 0.33;
   beginShape(TRIANGLE_STRIP);
   texture(t);
   float iu=(float)(t.width-1)/(sDetail);
@@ -265,4 +276,15 @@ class Sphere{
     }
     return false;
   }
+  Sphere generate(float r){
+    float d = random(this.r);
+    float angle = random(2*PI);
+    float xOff = d*cos(angle);
+    float yOff = d*sin(angle);
+    float zOff = sqrt(this.r*this.r-xOff*xOff-yOff*yOff);
+    Sphere s = new Sphere(this.x+xOff,this.y+yOff,this.z+zOff,r);
+    s.setVelocity(0,0,1);
+    return s;
+  }
 }
+

@@ -87,6 +87,14 @@ pt R(pt P, float a, vec I, vec J, pt G) {float x=d(V(G,P),I), y=d(V(G,P),J); flo
 void makePts(pt[] C) {for(int i=0; i<C.length; i++) C[i]=P();} // fills array C with points initialized to (0,0,0)
 pt Predict(pt A, pt B, pt C) {return P(B,V(A,C)); };     // B+AC, parallelogram predictor
 void v(pt P) {vertex(P.x,P.y,P.z);} // rendering
+pt PnoX(pt P) {return P(0, P.y, P.z);}
+pt PnoY(pt P) {return P(P.x, 0, P.z);}
+pt PnoZ(pt P) {return P(P.x, P.y, 0);}
+pt PonClosestAxis(pt P) {
+  if (P.z > P.x && P.z > P.y) return PnoZ(P);
+  else if (P.x > P.z && P.x > P.y) return PnoX(P);
+  else return PnoY(P);
+}
 
 
 // ===== mouse tools
@@ -124,6 +132,15 @@ void show(pt P, float r) {pushMatrix(); translate(P.x,P.y,P.z); sphere(r); popMa
 void show(pt P, float s, vec I, vec J, vec K) {noStroke(); fill(yellow); show(P,5); stroke(red); show(P,s,I); stroke(green); show(P,s,J); stroke(blue); show(P,s,K); }; // render sphere of radius r and center P
 void show(pt P, String s) {text(s, P.x, P.y, P.z); }; // prints string s in 3D at P
 void show(pt P, String s, vec D) {text(s, P.x+D.x, P.y+D.y, P.z+D.z);  }; // prints string s in 3D at P+D
+void showOnAxes(pt P, vec I, vec J, vec K) {
+  show(P, 30);
+  stroke(red);
+  show(P, I);
+  stroke(green);
+  show(P, J);
+  stroke(blue);
+  show(P, K);
+}
 
 // ==== curve
 void bezier(pt A, pt B, pt C, pt D) {bezier(A.x,A.y,A.z,B.x,B.y,B.z,C.x,C.y,C.z,D.x,D.y,D.z);} // draws a cubic Bezier curve with control points A, B, C, D
@@ -219,8 +236,21 @@ pt D(pt A, pt B, pt C, pt D, pt E, float t) {float a=0, b=d(A,B), c=b+d(B,C), d=
 
 
 /* Specific Project Functionality */
+
+// Neville interpolation
+pt Neville(pt A, pt B, pt C, float t) { return P(P(A,t,B),t/2,P(B,t-1,C)); };
+pt Neville(pt A, pt B, pt C, pt D, float t) {
+    pt PAB=P(A,t,B);
+    pt PBC=P(B,t-1,C);
+    pt PCD=P(C,t-2,D);
+    pt PABC=P(PAB,t/2,PBC);
+    pt PBCD=P(PBC,(t-1)/2,PCD);
+    pt PABCD=P(PABC,t/3,PBCD);
+    return PABCD;
+}
+
 // calculates the closest projection for a pt P on a given curve C
-vec projection(pt P, curve C) {
+vec projection(pt P, Curve C) {
   pt closest = C.ClosestVertex(P);
   return V(P, closest);
 }

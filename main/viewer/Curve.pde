@@ -24,6 +24,8 @@ class Curve {
   pt cP() {return P[p];}
   pt pP() {return P[prev(p)];}
   pt nP() {return P[next(p)];}
+  pt first() {return P[0];}
+  pt last() {return P[n - 1];}
   void declarePoints() {for (int i=0; i<P.length; i++) {P[i]=P(); Nfx[i]=V(); Nfy[i]=V(); Nx[i]=V() ;Ny[i]=V();} }  // allocates space
   void resetPoints() {float r=100; for (int i=0; i<n; i++) {P[i].x=r*cos(TWO_PI/n); P[i].y=r*sin(TWO_PI/n);}; } // init the points to be on a circle
   void resetPoints(float r) {println(">>n="+n); for (int i=0; i<n; i++) {P[i].x=r*cos(TWO_PI/n*i); P[i].y=r*sin(TWO_PI/n*i);}; } // init the points to be on a circle
@@ -57,8 +59,29 @@ class Curve {
   pt interpolate(float t) { return D(P[0],P[1],P[2],P[3],P[4],t); }
 
   Curve drawEdges() {beginShape(); for (int i=0; i<n; i++) vertex(P[i]); endShape(); return this;}  // fast draw of edges
-  Curve showSamples() {for (int i=0; i<n; i++) show(P[i],1); return this;}  // fast draw of edges
-  Curve showSamples(float r) {for (int i=0; i<n; i++) show(P[i],r); return this;}  // fast draw of edges
+  Curve drawShadows() {
+    beginShape(); for (int i=0; i<n; i++) vertex(PnoX(P[i])); endShape();
+    beginShape(); for (int i=0; i<n; i++) vertex(PnoY(P[i])); endShape();
+    beginShape(); for (int i=0; i<n; i++) vertex(PnoZ(P[i])); endShape();
+    return this;
+  }
+  Curve showSamples() {noFill(); for (int i=0; i<n; i++) show(P[i],1); return this;}  // fast draw of edges
+  Curve showSamples(float r) { // fast draw of edges
+    noFill();
+    for (int i=0; i<n; i++) {
+      show(P[i],r);
+    }
+    return this;
+  }
+  Curve showShadowSamples(float r) { // fast draw of edges
+    noFill();
+    for (int i=0; i<n; i++) {
+      show(PnoX(P[i]),r);
+      show(PnoY(P[i]),r);
+      show(PnoZ(P[i]),r);
+    }
+    return this;
+  } 
   void showPick() {show(P[p],2); }  // fast draw of edges
   void cloneFrom(Curve D) {for (int i=0; i<max(n,D.n); i++) P[i].set(D.P[i]); n=D.n;}
   pt pt(int i) {return P[i];}
@@ -72,6 +95,9 @@ class Curve {
     pt R=P[0];
     for (int i=1; i<n; i++) if (d(M,P[i])<d(M,R)) R=P[i];
     return P(R);
+  }
+  boolean nearLast(pt M) {
+    return (closestVertexID(M) == (this.n - 1));
   }
   float distanceTo(pt M) {float md=d(M,P[0]); for (int i=1; i<n; i++) md=min(md,d(M,P[i])); return md;}
   void savePts() {savePts("data/P.pts");}
@@ -120,7 +146,7 @@ class Curve {
     return NL;
     }
  
-  void resample(int nn) { // resamples the curve with new nn vertices
+  /*void resample(int nn) { // resamples the curve with new nn vertices
     if(nn<3) return;
     float L = length();  // current total length  
     float d = L / nn;   // desired arc-length spacing                        
@@ -139,7 +165,42 @@ class Curve {
        else {rd-=cl; Q.set(P[nk]); k++; };
        };
      n=s;   for (int i=0; i<n; i++)  P[i].set(R[i]);
-   }
+   }*/
+
+  Curve setNV(int n2) {
+    if (n != n2) {
+      while (n < n2) { // if you have too few points, subdivide
+        subdivide();
+      }
+      resample(n2); // otherwise, resample
+    }
+
+    return this;
+  }
+
+  Curve resample(int n2) {
+    if (n2 > 1) {
+      float d = (float) n / n2; // find out the length n of our step
+      pt[] S = new pt[n2];
+      S[0] = P[0];
+
+      int i;
+      float j;
+      for (i = 1, j = d; i < n2 && j < n; i++, j += d) {
+        int j_i = (int) j;
+        // walk along. if we land between two points, just interpolate between those two as a cheap way of finding that point
+        // otherwise, we just take the point we landed on
+        S[i] = P(P[j_i], j % 1, P[j_i + 1]);
+      }
+      S[n2 - 1] = P[n - 1]; // make sure we always keep the last point
+      for (i = 0; i < n; i++) {
+        P[i] = i < n2 ? S[i] : P(); // copy back and also reset all other vertices to 0,0
+      }
+
+      n = n2;
+    }
+    return this;
+  }
 
   // ******** subdividing
   Curve subdivide() {
@@ -164,8 +225,10 @@ class Curve {
       }
     }
 
-    n = S.length;
-    for (int v=0; v < S.length; v++) P[v]=S[v]; // copy back
+    n = 2 * n - 1;
+    for (int v=0; v < S.length; v++) {
+      P[v]=S[v]; // copy back
+    }
     return this;
   }
    
@@ -241,6 +304,16 @@ class Curve {
     computeTwistFreeNormals();
     computeTwistFreeBiNormals();
     return this;}
+
+  vec velocityFrom(pt M) {
+    int closest = closestVertexID(M);
+    //TODO: some kind of decay function?
+    //float dtoP = distanceTo(M);
+    //float offset = dtoP * ((PI/2)*distanceTo(last()));
+    //System.out.println("cos: " + cos(sq(offset)));
+    //return V(cos(sq(offset)), U(P[closest], P[next(closest)]));
+    return V(5, U(P[closest], P[next(closest)]));
+  }
     
   void showTube(float r, int ne, int nq, color col) {
       pt [][] C = new pt [2][ne];
