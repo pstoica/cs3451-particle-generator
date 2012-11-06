@@ -109,6 +109,7 @@ class Curve {
     return (closestVertexID(M) == (this.n - 1));
   }
   float distanceTo(pt M) {float md=d(M,P[0]); for (int i=1; i<n; i++) md=min(md,d(M,P[i])); return md;}
+  float farthestDistanceTo(pt M) {float md=d(M,P[0]); for (int i=1; i<n; i++) md=max(md,d(M,P[i])); return md;}
   void savePts() {savePts("data/P.pts");}
   void savePts(String fn) { String [] inppts = new String [n+1];
     int s=0; inppts[s++]=str(n); 
@@ -317,12 +318,9 @@ class Curve {
   vec velocityFrom(pt M) {
     int closest = closestVertexID(M);
     float dToP = distanceTo(M);
-    //TODO: some kind of decay function?
-    //float dtoP = distanceTo(M);
-    //float offset = dtoP * ((PI/2)*distanceTo(last()));
-    //System.out.println("cos: " + cos(sq(offset)));
-    //return V(cos(sq(offset)), U(P[closest], P[next(closest)]));
-    return V(20/(1+dToP), V(P[closest], P[next(closest)]));
+    float scalar = dToP * ((PI/2 - 0.1)/(farthestDistanceTo(last()))); // map from [0, maxD] to [0, PI/2], or something very close to PI/2
+    scalar = sq(cos(scalar));
+    return V(scalar, V(P[closest], P[next(closest)]));
   }
     
   void showTube(float r, int ne, int nq, color col) {

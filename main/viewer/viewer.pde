@@ -25,13 +25,15 @@ Boolean
   showFrenetNormal=false,
   filterFrenetNormal=true,
   showTwistFreeNormal=false, 
-  showHelpText=false;
+  showHelpText=false,
+  paused=false;
 
 final int INSERT_POINT = 1,
           ADD_POINT = 2,
           DELETE_POINT = 3,
           MOVE_POINT = 4,
-          MOVE_PG = 5;
+          MOVE_PG = 5,
+          MOVE_EARTH = 6;
 
 // ****************************** VIEW PARAMETERS *******************************************************
 pt F = P(0,0,0); pt T = P(0,0,0); pt E; vec U=V(0,1,0); pt mouse, picked; // focus  set with mouse when pressing ';', eye, and up vector
@@ -47,9 +49,12 @@ float sampleDistance=10; // sample distance for spine
 pt sE = P(), sF = P(); vec sU=V(); //  view parameters (saved with 'j'
 float t = 0;
 int particlesPerSecond = 3;
+float oneSecond = 10.0;
 int particleRadius = 3;
 int pgRadius = 100;
+int earthRadius = 50;
 float pgGravity = 100;
+float velocityBlend = 0.5;
 
 // *******************************************************************************************************************    SETUP
 void setup() {
@@ -75,20 +80,32 @@ void setup() {
     .setCaptionLabel("Particle Radius")
     .setColorCaptionLabel(0x000);
 
-  cp5.addSlider("pgRadius")
+  cp5.addSlider("velocityBlend")
     .setPosition(10,50)
+    .setRange(0,1.0)
+    .setCaptionLabel("Velocity Blend")
+    .setColorCaptionLabel(0x000);
+
+  cp5.addSlider("pgRadius")
+    .setPosition(10,70)
     .setRange(10,500)
     .setCaptionLabel("Particle Generator Radius")
     .setColorCaptionLabel(0x000);
 
+  cp5.addSlider("earthRadius")
+    .setPosition(10,90)
+    .setRange(10,200)
+    .setCaptionLabel("Earth Radius")
+    .setColorCaptionLabel(0x000);
+
   cp5.addSlider("pgGravity")
-    .setPosition(10,70)
+    .setPosition(10,110)
     .setRange(0,300)
     .setCaptionLabel("Gravity")
     .setColorCaptionLabel(0x000);
 
   buttons = cp5.addRadioButton("radioButton")
-            .setPosition(10,90)
+            .setPosition(10,130)
             .setSize(40,20)
             .setColorForeground(color(120))
             .setColorActive(color(140))
@@ -99,13 +116,29 @@ void setup() {
             .addItem("Add Control Point", 2)
             .addItem("Delete Control Point", 3)
             .addItem("Move Control Point (x, y, z)", 4)
-            .addItem("Move Particle Generator (x, y, z)", 5);
+            .addItem("Move Particle Generator (x, y, z)", 5)
+            .addItem("Move Earth (x, y, z)", 6);
+
+  cp5.addTextlabel("label1")
+    .setText("r and m: rotate")
+    .setPosition(10,270)
+    .setColorValue(color(0));
+
+  cp5.addTextlabel("label2")
+    .setText("n: zoom")
+    .setPosition(10,290)
+    .setColorValue(color(0));
+
+  cp5.addTextlabel("label3")
+    .setText("p: pause")
+    .setPosition(10,310)
+    .setColorValue(color(0));
 
   // ***************** Load Curve
   C.loadPts();
   S0.cloneFrom(C);
   pg = new ParticleGenerator(S0, pgRadius);
-  pg.setEarth(new pt(200,300,400),50);
+  pg.setEarth(new pt(200,300,400),earthRadius);
   
   texmap = loadImage("world32k.jpg");    
   initializeSphere(sDetail);
@@ -114,6 +147,11 @@ void setup() {
 void radioButton(int a) {
   System.out.println("wtf");
   picked = null;
+}
+
+void pause() {
+  paused = !paused;
+  System.out.println(paused + " ");
 }
   
 // ******************************************************************************************************************* DRAW      
@@ -172,9 +210,14 @@ void draw() {
    
    // -------------------------------------------------------- compute spine normals  ----------------------------------   
    //S0.prepareSpine(0);
-   if (t > 1.0) {
-    pg.generate(particlesPerSecond);
+   if (!paused) {
+    if (t > oneSecond) {
+      pg.generate(particlesPerSecond);
+      t = 0;
+    }
+    t += 0.2;
    }
+
    pg.drawParticles();
   
    // -------------------------------------------------------- show tube ----------------------------------   
@@ -206,12 +249,11 @@ void draw() {
    if(snapping) snapPicture(); // does not work for a large screen
     pressed=false;
 
-  if (t > 1) t = 0;
-  t += 0.2;
-
   pg.radius = pgRadius;
+  pg.earthR = earthRadius;
   pg.gravity = pgGravity;
   pg.particleRadius = particleRadius;
+  pg.blend = velocityBlend;
 
  } // end draw
  
@@ -230,6 +272,7 @@ void mouseDragged() {
     V.z = 0;
     if (buttons.getValue() == MOVE_POINT) C.dragPoint(V);
     if (buttons.getValue() == MOVE_PG) pg.dragOrigin(V);
+    if (buttons.getValue() == MOVE_EARTH) pg.dragEarth(V);
   }
   if(keyPressed&&key=='y') {
     vec V = V(-1*(mouseX-pmouseX), J, -1*(mouseY-pmouseY), J);
@@ -237,13 +280,15 @@ void mouseDragged() {
     V.z = 0;
     if (buttons.getValue() == MOVE_POINT) C.dragPoint(V);
     if (buttons.getValue() == MOVE_PG) pg.dragOrigin(V);
+    if (buttons.getValue() == MOVE_EARTH) pg.dragEarth(V);
   }
   if(keyPressed&&key=='z') {
     vec V = V((mouseX-pmouseX), K, (mouseY-pmouseY), K);
     V.x = 0;
     V.y = 0;
-    if (buttons.getValue() == MOVE_POINT) C.dragPoint(V(0, 0, .5*(mouseX-pmouseX)));
+    if (buttons.getValue() == MOVE_POINT) C.dragPoint(V);
     if (buttons.getValue() == MOVE_PG) pg.dragOrigin(V);
+    if (buttons.getValue() == MOVE_EARTH) pg.dragEarth(V);
   }
   if(keyPressed&&key=='b') {C.dragAll(V(.5*(mouseX-pmouseX),I,.5*(mouseY-pmouseY),K) ); } // move selected vertex of curve C in screen plane
   if(keyPressed&&key=='v') {C.dragAll(V(.5*(mouseX-pmouseX),I,-.5*(mouseY-pmouseY),J) ); } // move selected vertex of curve Cb in XZ
@@ -309,7 +354,7 @@ void keyPressed() {
   if(key=='K') {}
   if(key=='M') {}
   if(key=='O') {}
-  if(key=='P') {}
+  if(key=='p') {pause();}
   if(key=='Q') {exit();}
   if(key=='R') {}
   if(key=='T') {}

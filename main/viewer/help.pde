@@ -8,9 +8,7 @@ void writeHelp () {fill(dblue);
 
    }
 void writeFooterHelp () {fill(dbrown);
-    scribeFooter("Particle Generator Radius: ", 3);
-    scribeFooter("Particles Per Second: ", 2);
-    scribeFooter("Velocity Field Project. Press ?:help",1);
+    scribeFooter("CS 3451 Project 4 by Owen Cox and Patrick Stoica",1);
   }
 void scribeHeader(String S) {text(S,10,20);} // writes on screen at line i
 void scribeHeaderRight(String S) {text(S,width-S.length()*15,20);} // writes on screen at line i
