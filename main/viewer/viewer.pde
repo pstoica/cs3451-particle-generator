@@ -12,6 +12,7 @@ GL gl;
 GLU glu;
 ControlP5 cp5;
 RadioButton buttons;
+Textlabel fr;
 
 // ****************************** GLOBAL VARIABLES FOR DISPLAY OPTIONS *********************************
 Boolean 
@@ -26,7 +27,8 @@ Boolean
   filterFrenetNormal=true,
   showTwistFreeNormal=false, 
   showHelpText=false,
-  paused=false;
+  paused=false,
+  collision=true;
 
 final int INSERT_POINT = 1,
           ADD_POINT = 2,
@@ -48,12 +50,12 @@ int nsteps=250; // number of smaples along spine
 float sampleDistance=10; // sample distance for spine
 pt sE = P(), sF = P(); vec sU=V(); //  view parameters (saved with 'j'
 float t = 0;
-int particlesPerSecond = 3;
+int particlesPerSecond = 0;
 float oneSecond = 10.0;
 int particleRadius = 3;
 int pgRadius = 100;
 int earthRadius = 50;
-float pgGravity = 100;
+float pgGravity = 0;
 float velocityBlend = 0.5;
 
 // *******************************************************************************************************************    SETUP
@@ -134,6 +136,16 @@ void setup() {
     .setPosition(10,310)
     .setColorValue(color(0));
 
+  cp5.addTextlabel("label4")
+    .setText("c: collisions")
+    .setPosition(10,330)
+    .setColorValue(color(0));
+
+  fr = cp5.addTextlabel("frameRate")
+    .setText("framerate: " + frameRate)
+    .setPosition(10,350)
+    .setColorValue(color(0));
+
   // ***************** Load Curve
   C.loadPts();
   S0.cloneFrom(C);
@@ -147,13 +159,11 @@ void setup() {
 void radioButton(int a) {
   picked = null;
 }
-
-void pause() {
-  paused = !paused;
-}
   
 // ******************************************************************************************************************* DRAW      
 void draw() {  
+  fr.setText("framerate: " + frameRate);
+
   background(white);
   // -------------------------------------------------------- Help ----------------------------------
   if(showHelpText) {
@@ -318,7 +328,7 @@ void mouseClicked() {
 void keyPressed() {
   if(key=='a') {} // drag curve control point in xz (mouseDragged)
   if(key=='b') {}  // move S2 in XZ
-  if(key=='c') {} // load curve
+  if(key=='c') {collision = !collision;}
   if(key=='d') {} 
   if(key=='e') {}
   if(key=='f') {filterFrenetNormal=!filterFrenetNormal; if(filterFrenetNormal) println("Filtering"); else println("not filtering");}
@@ -340,7 +350,7 @@ void keyPressed() {
    
   if(key=='A') {C.savePts();}
   if(key=='B') {}
-  if(key=='C') {C.loadPts();} // save curve
+  if(key=='C') {C.loadPts();} // load curve
   if(key=='F') {}
   if(key=='G') {}
   if(key=='H') {}
@@ -349,7 +359,7 @@ void keyPressed() {
   if(key=='K') {}
   if(key=='M') {}
   if(key=='O') {}
-  if(key=='p') {pause();}
+  if(key=='p') {paused = !paused;}
   if(key=='Q') {exit();}
   if(key=='R') {}
   if(key=='T') {}
