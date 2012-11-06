@@ -70,7 +70,7 @@ void setup() {
   cp5 = new ControlP5(this);
   cp5.addSlider("particlesPerSecond")
     .setPosition(10,10)
-    .setRange(1,50)
+    .setRange(0,50)
     .setCaptionLabel("Particles Per Second")
     .setColorCaptionLabel(0x000);
 
@@ -145,13 +145,11 @@ void setup() {
   }
 
 void radioButton(int a) {
-  System.out.println("wtf");
   picked = null;
 }
 
 void pause() {
   paused = !paused;
-  System.out.println(paused + " ");
 }
   
 // ******************************************************************************************************************* DRAW      
@@ -307,15 +305,12 @@ void mouseClicked() {
   if (picked != null) {
     if (buttons.getValue() == INSERT_POINT) {
         C.insert(picked);
-        System.out.println("vertices: " + C.n);
     }
     if (buttons.getValue() == ADD_POINT) {
       C.append(picked);
-      System.out.println("vertices: " + C.n);
     }
     if (buttons.getValue() == DELETE_POINT && C.n > 2) {
       C.delete();
-      System.out.println("vertices: " + C.n);
     }
   }
 }

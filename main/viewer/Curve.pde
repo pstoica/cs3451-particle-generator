@@ -33,7 +33,7 @@ class Curve {
   Curve empty(){ n=0; return this; };      // resets the vertex count to zero
   void pick(pt M) {p=closestVertexID(M);}
   void pick(int id) {p = id;}
-  void dragPoint(vec V) { P[p].add(V); System.out.println(V.x + " " + V.y + " " + V.z);}
+  void dragPoint(vec V) { P[p].add(V); }
   void dragAll(vec V) {for (int i=0; i<n; i++) P[i].add(V);}
   void dragAll(int s, int e, vec V) {for (int i=s; i<e+1; i++) P[i].add(V);}
   void movePointTo(pt Q) {P[p].set(Q);}
@@ -92,6 +92,11 @@ class Curve {
     for (int i=1; i<n; i++) if (d(M,P[i])<d(M,P[v])) v=i;
     return v;
   }
+  int closestVertexID(pt M, int prev) {
+    int v=0;
+    for (int i=1; i<n; i++) if (d(M,P[i])<d(M,P[v]) && i >= prev) v=i;
+    return v;
+  }
   pt ClosestVertex(pt M) {
     pt R=P[0];
     for (int i=1; i<n; i++) if (d(M,P[i])<d(M,R)) R=P[i];
@@ -106,7 +111,8 @@ class Curve {
     return P(P[ClosestVertexID2D(M)]);
   }
   boolean nearLast(pt M) {
-    return (closestVertexID(M) == (this.n - 1));
+    System.out.println(closestVertexID(M) + " " + n);
+    return (closestVertexID(M) == (this.n));
   }
   float distanceTo(pt M) {float md=d(M,P[0]); for (int i=1; i<n; i++) md=min(md,d(M,P[i])); return md;}
   float farthestDistanceTo(pt M) {float md=d(M,P[0]); for (int i=1; i<n; i++) md=max(md,d(M,P[i])); return md;}
@@ -320,6 +326,15 @@ class Curve {
     float dToP = distanceTo(M);
     float scalar = dToP * ((PI/2 - 0.1)/(farthestDistanceTo(last()))); // map from [0, maxD] to [0, PI/2], or something very close to PI/2
     scalar = sq(cos(scalar));
+    return V(scalar, V(P[closest], P[next(closest)]));
+  }
+
+  vec velocityFrom(pt M, int prev) {
+    int closest = closestVertexID(M, prev);
+    float dToP = distanceTo(M);
+    float scalar = dToP * ((PI/2 - 0.1)/(farthestDistanceTo(last()))); // map from [0, maxD] to [0, PI/2], or something very close to PI/2
+    scalar = sq(cos(scalar));
+    if (closest > 150) System.out.println("closest: " + closest);
     return V(scalar, V(P[closest], P[next(closest)]));
   }
     
