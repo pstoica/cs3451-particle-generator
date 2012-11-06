@@ -37,7 +37,7 @@ class Curve {
   void dragAll(vec V) {for (int i=0; i<n; i++) P[i].add(V);}
   void dragAll(int s, int e, vec V) {for (int i=s; i<e+1; i++) P[i].add(V);}
   void movePointTo(pt Q) {P[p].set(Q);}
-  Curve append(pt Q)  {if(n+1 < P.length) { p=n; P[n++].set(Q); } return this; }; // add point at end of list
+  Curve append(pt Q)  {if(n+1 < P.length) { P[n++] = Q; } return this; }; // add point at end of list
   void delete() {for (int i=p; i<n-1; i++) P[i] = (P[next(i)]); n--; p=prev(p);}
   void insert() { // inserts after p
     if(p==n-1) {P[n].set(P[n-1]); p=n; n++; } 
@@ -111,7 +111,6 @@ class Curve {
     return P(P[ClosestVertexID2D(M)]);
   }
   boolean nearLast(pt M) {
-    System.out.println(closestVertexID(M) + " " + n);
     return (closestVertexID(M) == (this.n));
   }
   float distanceTo(pt M) {float md=d(M,P[0]); for (int i=1; i<n; i++) md=min(md,d(M,P[i])); return md;}
@@ -276,7 +275,6 @@ class Curve {
     String subpts;
     int s=0;   int comma1, comma2;   float x, y, z;   
     n = int(ss[s++]);
-    println("n="+n);
     for(int k=0; k<n; k++) {
       int i=k+s; 
       comma1=ss[i].indexOf(',');   
@@ -284,7 +282,6 @@ class Curve {
       String rest = ss[i].substring(comma1+1, ss[i].length());
       comma2=rest.indexOf(',');    y=float(rest.substring(0, comma2)); z=float(rest.substring(comma2+1, rest.length()));
       P[k].set(x,y,z);
-      //      println(k+":"+"("+x+","+y+","+z+"),");
       };
       println("done loading");  
     }; 
@@ -334,7 +331,6 @@ class Curve {
     float dToP = distanceTo(M);
     float scalar = dToP * ((PI/2 - 0.1)/(farthestDistanceTo(last()))); // map from [0, maxD] to [0, PI/2], or something very close to PI/2
     scalar = sq(cos(scalar));
-    if (closest > 150) System.out.println("closest: " + closest);
     return V(scalar, V(P[closest], P[next(closest)]));
   }
     

@@ -78,7 +78,7 @@ void setup() {
 
   cp5.addSlider("particleRadius")
     .setPosition(10,30)
-    .setRange(1,20)
+    .setRange(1,50)
     .setCaptionLabel("Particle Radius")
     .setColorCaptionLabel(0x000);
 
@@ -150,7 +150,7 @@ void setup() {
   C.loadPts();
   S0.cloneFrom(C);
   pg = new ParticleGenerator(S0, pgRadius);
-  pg.setEarth(new pt(200,300,400),earthRadius);
+  pg.setEarth(new pt(400,100,100),earthRadius);
   
   texmap = loadImage("world32k.jpg");    
   initializeSphere(sDetail);
@@ -165,13 +165,6 @@ void draw() {
   fr.setText("framerate: " + frameRate);
 
   background(white);
-  // -------------------------------------------------------- Help ----------------------------------
-  if(showHelpText) {
-    camera(); // 2D display to show cutout
-    lights();
-    fill(black); writeHelp();
-    return;
-  }
 
   mouse = P(mouseX, mouseY, 0);
     
@@ -188,7 +181,7 @@ void draw() {
     noFill();
     show(picked, 10);
   } else if(buttons.getValue() == ADD_POINT) {
-    picked = P(C.last(), V(100, 100, 100));
+    picked = P(C.last(), V(20, 20, 20));
     stroke(orange);
     noFill();
     show(picked, 10);
@@ -219,14 +212,15 @@ void draw() {
    // -------------------------------------------------------- compute spine normals  ----------------------------------   
    //S0.prepareSpine(0);
    if (!paused) {
-    if (t > oneSecond) {
-      pg.generate(particlesPerSecond);
+    if (t > oneSecond/particlesPerSecond) {
+      pg.generate(1);
       t = 0;
     }
     t += 0.2;
    }
 
    pg.drawParticles();
+   pg.checkCollisions();
   
    // -------------------------------------------------------- show tube ----------------------------------   
    //if(showTube) S0.showTube(10,4,10,orange); 
